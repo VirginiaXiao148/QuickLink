@@ -1,5 +1,5 @@
 const { nanoid } = require('nanoid');
 
-const generateShortCode = (length = 7) => nanoid(length);
+const generateShortCode = (length = 6) => nanoid(length);
 
 module.exports = generateShortCode;

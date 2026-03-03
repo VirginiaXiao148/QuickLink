@@ -3,6 +3,7 @@ jest.mock('../src/models/Url');
 const request = require('supertest');
 const app = require('../app');
 const Url = require('../src/models/Url');
+const generateUniqueShortCode = require('../src/utils/generateUniqueShortCode');
 
 // Shared mock URL document factory
 const makeMockUrl = (overrides = {}) => {
@@ -122,5 +123,32 @@ describe('GET /api/urls/:shortCode/stats', () => {
 
     const res = await request(app).get('/api/urls/doesnotexist/stats');
     expect(res.statusCode).toBe(404);
+  });
+});
+
+describe('generateUniqueShortCode', () => {
+  it('returns a 6-character string', async () => {
+    Url.exists.mockResolvedValue(false);
+    const code = await generateUniqueShortCode(Url);
+    expect(typeof code).toBe('string');
+    expect(code).toHaveLength(6);
+  });
+
+  it('retries until a unique code is found', async () => {
+    Url.exists
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValue(false);
+    const code = await generateUniqueShortCode(Url);
+    expect(typeof code).toBe('string');
+    expect(code).toHaveLength(6);
+    expect(Url.exists).toHaveBeenCalledTimes(3);
+  });
+
+  it('throws an error after exceeding the retry limit', async () => {
+    Url.exists.mockResolvedValue(true);
+    await expect(generateUniqueShortCode(Url)).rejects.toThrow(
+      'Unable to generate a unique short code. Please try again.'
+    );
   });
 });
