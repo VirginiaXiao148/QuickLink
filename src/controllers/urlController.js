@@ -1,17 +1,12 @@
 const Url = require('../models/Url');
-const generateShortCode = require('../utils/generateShortCode');
+const generateUniqueShortCode = require('../utils/generateUniqueShortCode');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 const createShortUrl = async (req, res) => {
   const { originalUrl, expiresAt } = req.body;
   try {
-    let shortCode;
-    let exists = true;
-    while (exists) {
-      shortCode = generateShortCode();
-      exists = await Url.exists({ shortCode });
-    }
+    const shortCode = await generateUniqueShortCode(Url);
 
     const url = await Url.create({
       originalUrl,
